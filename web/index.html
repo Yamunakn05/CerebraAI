@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CerebraAI — Advanced Deep Learning Brain Tumor Diagnostic System & Clinical Workspace Platform</title>
+  <meta name="description" content="CEREBRAAI — ADVANCED DEEP LEARNING BRAIN TUMOR DIAGNOSTIC SYSTEM & CLINICAL WORKSPACE PLATFORM. Multi-Class Brain Tumor Detection, Explainable AI Visualization, and Integrated Role-Aware Medical Management." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/css/styles.css" />
+</head>
+<body>
+  <!-- Ambient background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <!-- Landing Page Screen (shown when not logged in) -->
+  <div id="landing-screen" class="landing-screen hidden"></div>
+
+  <!-- App Shell (shown when logged in) -->
+  <div id="app" class="app-shell hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">🧠</span>
+        <div>
+          <div class="logo-name">CerebraAI</div>
+          <div class="logo-sub">Advanced Diagnostic System</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <a href="#" class="nav-item" data-page="upload">
+          <span class="nav-icon">📤</span><span class="nav-label">MRI Upload</span>
+        </a>
+        <a href="#" class="nav-item" data-page="analysis">
+          <span class="nav-icon">🔬</span><span class="nav-label">Analysis</span>
+        </a>
+        <a href="#" class="nav-item" data-page="dashboard">
+          <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="chatbot">
+          <span class="nav-icon">🤖</span><span class="nav-label">AI Assistant</span>
+        </a>
+        <a href="#" class="nav-item" data-page="medicine">
+          <span class="nav-icon">💊</span><span class="nav-label">Medicine Intelligence</span>
+        </a>
+        <a href="#" class="nav-item" data-page="emergency">
+          <span class="nav-icon">🏥</span><span class="nav-label">Emergency</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-user" id="sidebar-user">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-username">Loading...</div>
+          <div class="user-role" id="sidebar-role">—</div>
+        </div>
+        <button class="logout-btn" id="logout-btn" title="Logout">⏻</button>
+      </div>
+    </aside>
+
+    <!-- Mobile header -->
+    <header class="mobile-header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="mobile-logo">🧠 CerebraAI</span>
+    </header>
+
+    <!-- Main content -->
+    <main class="main-content" id="main-content">
+      <div id="page-container"></div>
+    </main>
+  </div>
+
+  <!-- Auth Modal Screen -->
+  <div id="auth-modal" class="auth-modal-overlay hidden">
+    <div class="auth-modal-content">
+      <button class="modal-close-btn" onclick="closeAuthModal()">✕</button>
+      <div id="auth-screen"></div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Loading overlay -->
+  <div id="global-loader" class="global-loader hidden">
+    <div class="loader-spinner"></div>
+    <div class="loader-text" id="loader-text">Loading...</div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/web/js/app.js"></script>
+  <script src="/web/js/auth.js"></script>
+  <script src="/web/js/upload.js"></script>
+  <script src="/web/js/analysis.js"></script>
+  <script src="/web/js/dashboard.js"></script>
+  <script src="/web/js/chatbot.js"></script>
+  <script src="/web/js/medicine.js"></script>
+  <script src="/web/js/emergency.js"></script>
+</body>
+</html>

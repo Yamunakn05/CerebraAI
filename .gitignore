@@ -1,0 +1,136 @@
+# ============================================================
+#  CerebraAI — .gitignore
+# ============================================================
+
+# ── Secrets & Environment ────────────────────────────────────
+.env
+*.env
+.env.*
+!.env.example
+
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# ── Virtual Environments ─────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Testing ──────────────────────────────────────────────────
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+test-results/
+
+# ── Jupyter / IPython ────────────────────────────────────────
+.ipynb_checkpoints
+*.ipynb
+
+# ── ML Model Artifacts ───────────────────────────────────────
+# Large binary model files — distribute via Git LFS or cloud storage
+models/*.h5
+models/*.keras
+models/*.pb
+models/*.tflite
+models/*.ckpt
+models/*.pth
+models/*.pt
+# Keep metadata files
+!models/model_info.json
+
+# ── Dataset ──────────────────────────────────────────────────
+# Image datasets can be large — use DVC or cloud storage
+dataset/glioma/
+dataset/meningioma/
+dataset/notumor/
+dataset/pituitary/
+data/
+
+# ── Generated Reports & Outputs ──────────────────────────────
+models/classification_report.txt
+models/confusion_matrix.png
+*.pdf
+*.mp3
+*.wav
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+*.log.*
+
+# ── OS & Editor ──────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains / PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# ── Flask / Web ──────────────────────────────────────────────
+instance/
+flask_session/
+uploads/
+static/uploads/
+tmp_uploads/
+
+# ── MongoDB / Database ───────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── Miscellaneous ─────────────────────────────────────────────
+*.bak
+*.swp
+*.tmp
+*.orig
+.cache/
+.sass-cache/
+node_modules/

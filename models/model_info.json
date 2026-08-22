@@ -1,0 +1,17 @@
+{
+  "accuracy": 0.9305555820465088,
+  "loss": 0.19332300126552582,
+  "precision": 0.9345022406376045,
+  "recall": 0.9305555555555556,
+  "f1_score": 0.930014378330403,
+  "categories": [
+    "glioma",
+    "meningioma",
+    "pituitary",
+    "notumor"
+  ],
+  "img_size": 128,
+  "test_set_size": 1080,
+  "note": "Re-evaluated post-hoc via evaluate_model.py \u2014 original training epoch count unknown.",
+  "model_file_evaluated": "models\\brain_tumor_model.h5"
+}

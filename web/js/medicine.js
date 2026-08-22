@@ -1,0 +1,286 @@
+// ============================================================
+// medicine.js — Medicine Intelligence Center + Pharmacy & Q&A
+// ============================================================
+
+let currentMedicineData = null;
+let medicineSearchVersion = 0;
+let medicineSearchController = null;
+let medicineChatVersion = 0;
+
+async function renderMedicinePage(container) {
+  // Results are page-local. A different user or a later visit must not inherit
+  // a previous user's medicine details or Q&A context.
+  currentMedicineData = null;
+  medicineSearchVersion++;
+  medicineSearchController?.abort();
+  container.innerHTML = `
+    <div class="page-header">
+      <h1>💊 Medicine Intelligence Center</h1>
+      <p>Search medications, view clinical details, precautions, interactions, pharmacy links, and AI Q&A.</p>
+    </div>
+
+    <!-- Search box -->
+    <div class="med-search-box">
+      <input class="med-search-input" id="med-search-input" placeholder="Search medicine (e.g. Temozolomide, Dexamethasone, Levetiracetam)..." />
+      <button class="btn btn-primary btn-lg" onclick="searchMedicine()">🔍 Search</button>
+    </div>
+
+    <div class="alert alert-info">
+      ⚠️ This information is intended for educational purposes only. Always consult a qualified physician before starting or altering any medication.
+    </div>
+
+    <!-- Quick starters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      <span style="font-size:.78rem;color:var(--text-dim);align-self:center">Popular searches:</span>
+      <button class="btn btn-sm btn-secondary" onclick="quickMedSearch('Temozolomide')">💊 Temozolomide</button>
+      <button class="btn btn-sm btn-secondary" onclick="quickMedSearch('Dexamethasone')">💊 Dexamethasone</button>
+      <button class="btn btn-sm btn-secondary" onclick="quickMedSearch('Levetiracetam')">💊 Levetiracetam</button>
+      <button class="btn btn-sm btn-secondary" onclick="quickMedSearch('Bevacizumab')">💊 Bevacizumab</button>
+    </div>
+
+    <!-- Results Container -->
+    <div id="med-result-container"></div>
+
+    <!-- Favorites & Recents -->
+    <div class="grid-2" style="gap:18px;margin-top:24px">
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:12px">⭐ Favorite Medicines</p>
+        <div id="favorites-list" style="color:var(--text-dim);font-size:.85rem">Loading favorites...</div>
+      </div>
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:12px">🕒 Recently Searched</p>
+        <div id="recents-list" style="color:var(--text-dim);font-size:.85rem">Loading recents...</div>
+      </div>
+    </div>
+  `;
+
+  // Enter key support
+  document.getElementById('med-search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchMedicine();
+  });
+
+  _loadMedicineStore();
+}
+
+async function searchMedicine(queryStr = null) {
+  const query = queryStr || document.getElementById('med-search-input').value.trim();
+  if (!query) { toast('⚠️ Please enter a medicine name.', 'error'); return; }
+
+  const searchVersion = ++medicineSearchVersion;
+  medicineSearchController?.abort();
+  const controller = new AbortController();
+  medicineSearchController = controller;
+  currentMedicineData = null;
+  const resultContainer = document.getElementById('med-result-container');
+  if (resultContainer) resultContainer.innerHTML = '';
+  showLoader(`Searching AI database for "${query}"...`);
+  let res;
+  try {
+    res = await api('/api/medicine/search', { method: 'POST', body: { query }, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    res = { error: 'Medicine search failed. Please try again.' };
+  }
+  hideLoader();
+
+  if (searchVersion !== medicineSearchVersion) return;
+
+  if (res.error) {
+    toast(`❌ ${res.error}`, 'error');
+    return;
+  }
+
+  currentMedicineData = res.medicine;
+  renderMedicineResult(res.medicine, res.disclaimer, res.source);
+  _loadMedicineStore();
+}
+
+function quickMedSearch(name) {
+  const input = document.getElementById('med-search-input');
+  if (input) input.value = name;
+  searchMedicine(name);
+}
+
+function renderMedicineResult(med, disclaimer, source) {
+  const container = document.getElementById('med-result-container');
+  if (!container) return;
+
+  const sideEffects = med.side_effects || {};
+  const commonSE = sideEffects.common || [];
+  const seriousSE = sideEffects.serious_adverse_reactions || [];
+  const safety = med.safety || {};
+  const interactions = med.interactions || {};
+
+  const qName = encodeURIComponent(med.name || med.generic_name || '');
+
+  // Source badge
+  const sourceMeta = {
+    pre_cached: { label: '📚 Pre-Cached Clinical Database', cls: 'badge-green', tip: 'Instant response from curated pharmaceutical database' },
+    groq_cached: { label: '🤖 Groq AI (Cached)', cls: 'badge-blue', tip: 'Previously fetched from Groq AI — served from cache' },
+    groq_live: { label: '⚡ Groq AI (Live)', cls: 'badge-violet', tip: 'Live response generated by Groq llama-3.1-8b model' },
+    fallback: { label: '⚠️ Generic Placeholder', cls: 'badge-yellow', tip: 'AI unavailable — showing generic data. Consult your pharmacist.' },
+  };
+  const sm = sourceMeta[source] || { label: '🔍 AI Database', cls: 'badge-cyan', tip: 'Medicine Intelligence Center' };
+  const sourceBadge = `<span class="badge ${sm.cls}" title="${sm.tip}" style="margin-left:8px;font-size:.68rem">${sm.label}</span>`;
+
+  container.innerHTML = `
+    <div class="glass-card animate-in" style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <h2 style="font-size:1.6rem;font-weight:800;color:var(--accent)">💊 ${med.name || 'Medicine Result'} ${sourceBadge}</h2>
+          <div style="color:var(--text-dim);font-size:.85rem">Generic: <strong>${med.generic_name || 'N/A'}</strong> | Class: <strong>${med.drug_class || 'N/A'}</strong></div>
+        </div>
+        <button class="fav-btn" id="fav-btn" onclick="toggleFav('${med.name}')" title="Toggle Favorite">⭐</button>
+      </div>
+      <p style="color:var(--text-muted);font-size:.88rem;line-height:1.7;margin-bottom:16px">${med.description || 'No description available.'}</p>
+      
+      <!-- Key Specs Grid -->
+      <div class="med-result-grid">
+        ${_medCard('Generic Name', med.generic_name)}
+        ${_medCard('Brand Examples', Array.isArray(med.brand_names) ? med.brand_names.join(', ') : med.brand_names)}
+        ${_medCard('Therapeutic Category', med.therapeutic_category)}
+        ${_medCard('Prescription Status', med.prescription_status)}
+        ${_medCard('Dosage Forms', Array.isArray(med.available_dosage_forms) ? med.available_dosage_forms.join(', ') : med.available_dosage_forms)}
+        ${_medCard('WHO Essential Status', med.who_essential_medicine_status)}
+      </div>
+    </div>
+
+    <!-- Clinical Insights -->
+    <div class="grid-2" style="gap:18px;margin-bottom:20px">
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:10px;color:var(--accent)">🔬 Mechanism of Action</p>
+        <p style="color:var(--text-muted);font-size:.85rem;line-height:1.7">${med.mechanism_of_action || 'Not available.'}</p>
+      </div>
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:10px;color:var(--green)">✅ Clinical Indications</p>
+        <ul style="color:var(--text-muted);font-size:.83rem;line-height:1.8;padding-left:16px">
+          ${(med.clinical_indications || []).map(i => `<li>${i}</li>`).join('') || '<li>Not available.</li>'}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Side Effects & Precautions -->
+    <div class="grid-2" style="gap:18px;margin-bottom:20px">
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:10px;color:var(--yellow)">⚠️ Side Effects</p>
+        <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:6px">Common:</p>
+        <ul style="color:var(--text-muted);font-size:.83rem;line-height:1.8;padding-left:16px;margin-bottom:12px">
+          ${commonSE.map(s => `<li>${s}</li>`).join('') || '<li>None specified.</li>'}
+        </ul>
+        ${seriousSE.length ? `
+          <p style="font-size:.78rem;color:var(--red);margin-bottom:6px">Serious / Seek Urgent Care:</p>
+          <ul style="color:#f87171;font-size:.83rem;line-height:1.8;padding-left:16px">
+            ${seriousSE.map(s => `<li>${s}</li>`).join('')}
+          </ul>
+        ` : ''}
+      </div>
+
+      <div class="glass-card">
+        <p style="font-weight:700;margin-bottom:10px;color:var(--violet)">🛡️ Safety & Precautions</p>
+        <div style="font-size:.83rem;color:var(--text-muted);line-height:1.9">
+          <div>🤰 <strong>Pregnancy:</strong> ${safety.pregnancy || 'N/A'}</div>
+          <div>🤱 <strong>Breastfeeding:</strong> ${safety.breastfeeding || 'N/A'}</div>
+          <div>🫁 <strong>Renal/Hepatic:</strong> ${safety.renal_impairment || 'N/A'}</div>
+          <div>🍷 <strong>Alcohol:</strong> ${interactions.alcohol || 'N/A'}</div>
+          <div>🍲 <strong>Food:</strong> ${interactions.food || 'N/A'}</div>
+        </div>
+      </div>
+    </div>
+
+    ${med.brain_tumor_clinical_notes ? `
+      <div class="glass-card" style="border-left:4px solid var(--accent);margin-bottom:20px">
+        <p style="font-weight:700;margin-bottom:6px;color:var(--accent)">🧠 Brain Tumor Clinical Notes</p>
+        <p style="color:var(--text-muted);font-size:.85rem;line-height:1.7">${med.brain_tumor_clinical_notes}</p>
+      </div>
+    ` : ''}
+
+    <!-- Pharmacy Links -->
+    <div class="glass-card" style="margin-bottom:20px">
+      <p style="font-weight:700;margin-bottom:12px">🛒 Order / Find Online</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="https://www.apollopharmacy.in/search-medicines/${qName}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">🏥 Apollo Pharmacy ↗</a>
+        <a href="https://www.1mg.com/search/all?name=${qName}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">💊 Tata 1mg ↗</a>
+        <a href="https://www.netmeds.com/catalogsearch/result?q=${qName}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">📦 Netmeds ↗</a>
+        <a href="https://pharmeasy.in/search/all?name=${qName}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">🩺 PharmEasy ↗</a>
+      </div>
+    </div>
+
+    <!-- Ask AI Q&A about this medicine -->
+    <div class="glass-card">
+      <p style="font-weight:700;margin-bottom:10px">🤖 Ask AI About ${med.name}</p>
+      <div style="display:flex;gap:10px">
+        <input class="form-input" id="med-qa-input" placeholder="Ask a specific question about ${med.name} (e.g. Can I take this with food?)..." />
+        <button class="btn btn-primary" onclick="askMedAI()">Ask AI</button>
+      </div>
+      <div id="med-qa-answer" style="margin-top:14px"></div>
+    </div>
+  `;
+}
+
+async function askMedAI() {
+  const qInput = document.getElementById('med-qa-input');
+  const question = qInput?.value.trim();
+  if (!question) return;
+
+  const ansDiv = document.getElementById('med-qa-answer');
+  ansDiv.innerHTML = '<div class="alert alert-info">⏳ AI is answering your question...</div>';
+
+  const contextStr = currentMedicineData ? `${currentMedicineData.name} (${currentMedicineData.generic_name})` : '';
+
+  const chatVersion = ++medicineChatVersion;
+  let res;
+  try {
+    res = await api('/api/medicine/chat', {
+      method: 'POST',
+      body: { question, context: contextStr },
+    });
+  } catch (_) {
+    res = { error: 'Medicine question failed. Please try again.' };
+  }
+
+  if (chatVersion !== medicineChatVersion || contextStr !== (currentMedicineData ? `${currentMedicineData.name} (${currentMedicineData.generic_name})` : '')) return;
+
+  if (res.error) {
+    ansDiv.innerHTML = `<div class="alert alert-error">❌ ${res.error}</div>`;
+  } else {
+    ansDiv.innerHTML = `<div class="chat-bubble bot animate-in">${renderMarkdown(res.reply)}</div>`;
+  }
+}
+
+function _medCard(label, val) {
+  return `
+    <div class="med-detail-card">
+      <div class="med-card-label">${label}</div>
+      <div class="med-card-value">${val || 'Not available'}</div>
+    </div>
+  `;
+}
+
+async function toggleFav(name) {
+  const res = await api('/api/medicine/favorite', { method: 'POST', body: { name } });
+  if (res.is_favorite) toast(`⭐ Added "${name}" to favorites!`, 'success');
+  else toast(`Removed "${name}" from favorites.`, 'info');
+  _loadMedicineStore();
+}
+
+async function _loadMedicineStore() {
+  const res = await api('/api/medicine/store');
+  if (res.error) return;
+
+  const favs = res.favorites || [];
+  const recs = res.recent || [];
+
+  const favEl = document.getElementById('favorites-list');
+  if (favEl) {
+    favEl.innerHTML = favs.length ? favs.map(f => `
+      <span class="badge badge-yellow" style="cursor:pointer;margin:3px" onclick="quickMedSearch('${f}')">⭐ ${f}</span>
+    `).join('') : 'No favorites saved yet.';
+  }
+
+  const recEl = document.getElementById('recents-list');
+  if (recEl) {
+    recEl.innerHTML = recs.length ? recs.slice(0, 8).map(r => `
+      <span class="badge badge-cyan" style="cursor:pointer;margin:3px" onclick="quickMedSearch('${r}')">💊 ${r}</span>
+    `).join('') : 'No recent searches.';
+  }
+}
