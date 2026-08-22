@@ -1,12 +1,5 @@
 # CEREBRAAI — ADVANCED DEEP LEARNING BRAIN TUMOR DIAGNOSTIC SYSTEM & CLINICAL WORKSPACE PLATFORM
 
-**Author / Project Team**: Deep Learning & Healthcare AI Division  
-**Institution / Platform**: CerebraAI Enterprise Diagnostic System  
-**Document Type**: Complete Technical Project Implementation Report & System Specification  
-**Version**: 2.0.0 (Production Release)  
-**Date**: August 2026  
-
----
 
 ## EXECUTIVE SUMMARY / ABSTRACT
 
