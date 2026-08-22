@@ -1,4 +1,4 @@
-# CEREBRAAI
+# CEREBRA AI
 ### Advanced Deep Learning Brain Tumor Diagnostic System & Clinical Workspace Platform
 
 <br/>
