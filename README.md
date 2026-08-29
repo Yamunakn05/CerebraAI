@@ -521,8 +521,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 <div align="center">
 
-Made with ❤️ and 🧠 for **CerebraAI**
-
 *CEREBRAAI — Advanced Deep Learning Brain Tumor Diagnostic System & Clinical Workspace Platform*
 
 [![GitHub stars](https://img.shields.io/github/stars/Yamunakn05/CerebraAI?style=social)](https://github.com/Yamunakn05/CerebraAI)
